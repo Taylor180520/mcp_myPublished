@@ -8,7 +8,6 @@ const MyMCPs: React.FC = () => {
   const [selectedType, setSelectedType] = useState<string>('');
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('');
-  const [selectedProviders, setSelectedProviders] = useState<string[]>([]);
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
   
@@ -162,7 +161,6 @@ const MyMCPs: React.FC = () => {
     const matchesSearch = !searchQuery || nameMatch || descriptionMatch || categoryMatch;
     
     // Filter matches
-    const matchesType = !selectedType || mcp.type === selectedType;
     const matchesStatus = selectedStatuses.length === 0 || selectedStatuses.includes(mcp.status);
     const matchesCategory = !selectedCategory || mcp.category === selectedCategory;
     const matchesProvider = selectedProviders.length === 0 || (mcp.provider && selectedProviders.includes(mcp.provider));
@@ -172,13 +170,12 @@ const MyMCPs: React.FC = () => {
     const matchesStartDate = !startDate || submittedDateObj >= new Date(startDate);
     const matchesEndDate = !endDate || submittedDateObj <= new Date(endDate);
     
-    return matchesSearch && matchesType && matchesStatus && matchesCategory && matchesProvider && matchesStartDate && matchesEndDate;
+    return matchesSearch && matchesStatus && matchesCategory && matchesProvider && matchesStartDate && matchesEndDate;
   });
 
   // Clear all filters
   const clearFilters = () => {
     setSearchQuery('');
-    setSelectedType('');
     setSelectedStatuses([]);
     setSelectedCategory('');
     setSelectedProviders([]);
@@ -205,7 +202,7 @@ const MyMCPs: React.FC = () => {
   };
 
   // Check if any filters are active
-  const hasActiveFilters = searchQuery || selectedType || selectedStatuses.length > 0 || selectedCategory || selectedProviders.length > 0 || startDate || endDate;
+  const hasActiveFilters = searchQuery || selectedStatuses.length > 0 || selectedCategory || selectedProviders.length > 0 || startDate || endDate;
 
   return (
     <div className="min-h-screen bg-black text-white p-6">
@@ -347,20 +344,7 @@ const MyMCPs: React.FC = () => {
           </div>
 
           {/* Second row for additional filters */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
-            {/* Type */}
-            <div>
-              <label className="block text-sm font-medium text-gray-400 mb-2">Type</label>
-              <select
-                value={selectedType}
-                onChange={(e) => setSelectedType(e.target.value)}
-                className="w-full px-3 py-2 bg-gray-800/50 border border-gray-700 rounded-lg text-white focus:border-purple-600 focus:outline-none"
-              >
-                <option value="">All Types</option>
-                <option value="build">Build Upload</option>
-                <option value="store">Store Link</option>
-              </select>
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
 
             {/* Date Range */}
             <div>

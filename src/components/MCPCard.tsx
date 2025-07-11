@@ -330,7 +330,6 @@ const MCPCard: React.FC<MCPCardProps> = ({ mcp }) => {
               {/* Tags Section */}
               <div className="flex flex-wrap gap-2 mb-3">
                 {renderCategoryTag()}
-                {renderTypeIndicator()}
               </div>
             </div>
           </div>
