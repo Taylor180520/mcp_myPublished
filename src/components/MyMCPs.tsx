@@ -5,20 +5,17 @@ import ConfirmationModal from './ConfirmationModal';
 
 const MyMCPs: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedType, setSelectedType] = useState<string>('');
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [selectedProviders, setSelectedProviders] = useState<string[]>([]);
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   
-  // Filter panel toggle states
-  const [isStatusFilterOpen, setIsStatusFilterOpen] = useState(false);
-  const [isProviderFilterOpen, setIsProviderFilterOpen] = useState(false);
-  
-  // Refs for click outside detection
-  const statusFilterRef = useRef<HTMLDivElement>(null);
-  const providerFilterRef = useRef<HTMLDivElement>(null);
+  // Temporary filter states for modal
+  const [tempSelectedStatuses, setTempSelectedStatuses] = useState<string[]>([]);
+  const [tempSelectedCategory, setTempSelectedCategory] = useState<string>('');
+  const [tempSelectedProviders, setTempSelectedProviders] = useState<string[]>([]);
   
   // Filter options
   const statusOptions = [
@@ -33,22 +30,7 @@ const MyMCPs: React.FC = () => {
   
   const providerOptions = ['ITEM', 'Individual'];
   
-  // Handle click outside to close dropdowns
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (statusFilterRef.current && !statusFilterRef.current.contains(event.target as Node)) {
-        setIsStatusFilterOpen(false);
-      }
-      if (providerFilterRef.current && !providerFilterRef.current.contains(event.target as Node)) {
-        setIsProviderFilterOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
+  const categoryOptions = ['Communication', 'Productivity', 'Weather', 'Utilities', 'Entertainment', 'Developer Tools'];
   
   const mcpData: MCPData[] = [
     {
@@ -174,6 +156,27 @@ const MyMCPs: React.FC = () => {
     return matchesSearch && matchesStatus && matchesCategory && matchesProvider && matchesStartDate && matchesEndDate;
   });
 
+  // Open filter modal and set temporary states
+  const openFilterModal = () => {
+    setTempSelectedStatuses([...selectedStatuses]);
+    setTempSelectedCategory(selectedCategory);
+    setTempSelectedProviders([...selectedProviders]);
+    setIsFilterModalOpen(true);
+  };
+
+  // Apply filters from modal
+  const applyFilters = () => {
+    setSelectedStatuses([...tempSelectedStatuses]);
+    setSelectedCategory(tempSelectedCategory);
+    setSelectedProviders([...tempSelectedProviders]);
+    setIsFilterModalOpen(false);
+  };
+
+  // Cancel filter changes
+  const cancelFilters = () => {
+    setIsFilterModalOpen(false);
+  };
+
   // Clear all filters
   const clearFilters = () => {
     setSearchQuery('');
@@ -182,24 +185,32 @@ const MyMCPs: React.FC = () => {
     setSelectedProviders([]);
     setStartDate('');
     setEndDate('');
+    setTempSelectedStatuses([]);
+    setTempSelectedCategory('');
+    setTempSelectedProviders([]);
   };
 
-  // Handle status filter changes
-  const handleStatusChange = (status: string) => {
-    setSelectedStatuses(prev => 
+  // Handle temporary status filter changes
+  const handleTempStatusChange = (status: string) => {
+    setTempSelectedStatuses(prev => 
       prev.includes(status) 
         ? prev.filter(s => s !== status)
         : [...prev, status]
     );
   };
 
-  // Handle provider filter changes
-  const handleProviderChange = (provider: string) => {
-    setSelectedProviders(prev => 
+  // Handle temporary provider filter changes
+  const handleTempProviderChange = (provider: string) => {
+    setTempSelectedProviders(prev => 
       prev.includes(provider) 
         ? prev.filter(p => p !== provider)
         : [...prev, provider]
     );
+  };
+
+  // Handle temporary category filter changes
+  const handleTempCategoryChange = (category: string) => {
+    setTempSelectedCategory(prev => prev === category ? '' : category);
   };
 
   // Check if any filters are active
@@ -222,27 +233,11 @@ const MyMCPs: React.FC = () => {
       </div>
 
       <div className="space-y-6">
-        {/* Enhanced Filters */}
+        {/* Search and Filter Bar */}
         <div className="bg-primary-color rounded-xl p-6 border border-gray-800">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-              <Filter className="w-5 h-5" />
-              Search & Filters
-            </h3>
-            {hasActiveFilters && (
-              <button
-                onClick={clearFilters}
-                className="text-purple-400 hover:text-purple-300 text-sm font-medium"
-              >
-                Clear All
-              </button>
-            )}
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+          <div className="flex flex-col md:flex-row gap-4 items-center">
             {/* Search */}
-            <div className="lg:col-span-2">
-              <label className="block text-sm font-medium text-gray-400 mb-2">Search MCP Servers</label>
+            <div className="flex-1">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <input
@@ -254,131 +249,24 @@ const MyMCPs: React.FC = () => {
                 />
               </div>
             </div>
-
-            {/* Category */}
-            <div>
-              <label className="block text-sm font-medium text-gray-400 mb-2">Category</label>
-              <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="w-full px-3 py-2 bg-gray-800/50 border border-gray-700 rounded-lg text-white focus:border-purple-600 focus:outline-none"
-              >
-                <option value="">All Categories</option>
-                <option value="Communication">Communication</option>
-                <option value="Productivity">Productivity</option>
-                <option value="Weather">Weather</option>
-                <option value="Utilities">Utilities</option>
-                <option value="Entertainment">Entertainment</option>
-                <option value="Developer Tools">Developer Tools</option>
-              </select>
-            </div>
-
-            {/* Status Filter - Checkbox Based */}
-            <div className="relative" ref={statusFilterRef}>
-              <label className="block text-sm font-medium text-gray-400 mb-2">Status</label>
-              <div className="relative">
-                <button
-                  onClick={() => setIsStatusFilterOpen(!isStatusFilterOpen)}
-                  className="w-full px-3 py-2 bg-gray-800/50 border border-gray-700 rounded-lg text-white focus:border-purple-600 focus:outline-none flex items-center justify-between"
-                >
-                  <span className="text-sm">
-                    {selectedStatuses.length === 0 
-                      ? 'All Status' 
-                      : `${selectedStatuses.length} selected`
-                    }
-                  </span>
-                  {isStatusFilterOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                </button>
-                
-                {isStatusFilterOpen && (
-                  <div className="absolute z-10 mt-1 w-full bg-gray-800 border border-gray-700 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                    {statusOptions.map((status) => (
-                      <label key={status} className="flex items-center px-3 py-2 hover:bg-gray-700 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={selectedStatuses.includes(status)}
-                          onChange={() => handleStatusChange(status)}
-                          className="mr-3 h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-600 rounded bg-gray-700"
-                        />
-                        <span className="text-sm text-white">{status}</span>
-                      </label>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Provider Filter - Checkbox Based */}
-            <div className="relative" ref={providerFilterRef}>
-              <label className="block text-sm font-medium text-gray-400 mb-2">Provider</label>
-              <div className="relative">
-                <button
-                  onClick={() => setIsProviderFilterOpen(!isProviderFilterOpen)}
-                  className="w-full px-3 py-2 bg-gray-800/50 border border-gray-700 rounded-lg text-white focus:border-purple-600 focus:outline-none flex items-center justify-between"
-                >
-                  <span className="text-sm">
-                    {selectedProviders.length === 0 
-                      ? 'All Providers' 
-                      : `${selectedProviders.length} selected`
-                    }
-                  </span>
-                  {isProviderFilterOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                </button>
-                
-                {isProviderFilterOpen && (
-                  <div className="absolute z-10 mt-1 w-full bg-gray-800 border border-gray-700 rounded-lg shadow-lg">
-                    {providerOptions.map((provider) => (
-                      <label key={provider} className="flex items-center px-3 py-2 hover:bg-gray-700 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={selectedProviders.includes(provider)}
-                          onChange={() => handleProviderChange(provider)}
-                          className="mr-3 h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-600 rounded bg-gray-700"
-                        />
-                        <span className="text-sm text-white">{provider}</span>
-                      </label>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Second row for additional filters */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
-
-            {/* Date Range */}
-            <div>
-              <label className="block text-sm font-medium text-gray-400 mb-2">From Date</label>
-              <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="w-full px-3 py-2 pl-10 bg-gray-800/50 border border-gray-700 rounded-lg text-white focus:border-purple-600 focus:outline-none"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-400 mb-2">To Date</label>
-              <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <input
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="w-full px-3 py-2 pl-10 bg-gray-800/50 border border-gray-700 rounded-lg text-white focus:border-purple-600 focus:outline-none"
-                />
-              </div>
-            </div>
-
+            
+            {/* Filter Button */}
+            <button
+              onClick={openFilterModal}
+              className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-colors"
+            >
+              <Filter className="w-4 h-4" />
+              Filters
+              {hasActiveFilters && (
+                <span className="bg-purple-800 text-xs px-2 py-1 rounded-full">
+                  {(selectedStatuses.length + (selectedCategory ? 1 : 0) + selectedProviders.length)}
+                </span>
+              )}
+            </button>
+            
             {/* Results Count */}
-            <div className="flex items-end">
-              <div className="text-sm text-gray-400">
-                <span className="font-medium text-white">{filteredMCPs.length}</span> of {mcpData.length} MCP Servers
-              </div>
+            <div className="text-sm text-gray-400">
+              <span className="font-medium text-white">{filteredMCPs.length}</span> of {mcpData.length} MCP Servers
             </div>
           </div>
         </div>
@@ -397,8 +285,136 @@ const MyMCPs: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Filter Modal */}
+      {isFilterModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-900 rounded-2xl w-full max-w-md border border-gray-700 overflow-hidden">
+            {/* Header */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-700">
+              <h2 className="text-xl font-bold text-white">Filter Options</h2>
+              <button
+                onClick={clearFilters}
+                className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Reset
+              </button>
+            </div>
+
+            {/* Filter Content */}
+            <div className="p-6 space-y-4 max-h-96 overflow-y-auto">
+              {/* Status Filters */}
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-3">Status</h3>
+                <div className="space-y-2">
+                  {statusOptions.map((status) => (
+                    <label key={status} className="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg border border-gray-700 cursor-pointer hover:bg-gray-800">
+                      <span className="text-white font-medium">{status}</span>
+                      <div className="relative">
+                        <input
+                          type="checkbox"
+                          checked={tempSelectedStatuses.includes(status)}
+                          onChange={() => handleTempStatusChange(status)}
+                          className="sr-only"
+                        />
+                        <div className={`w-6 h-6 rounded border-2 flex items-center justify-center transition-colors ${
+                          tempSelectedStatuses.includes(status)
+                            ? 'bg-purple-600 border-purple-600'
+                            : 'border-gray-500'
+                        }`}>
+                          {tempSelectedStatuses.includes(status) && (
+                            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                          )}
+                        </div>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Category Filters */}
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-3">Category</h3>
+                <div className="space-y-2">
+                  {categoryOptions.map((category) => (
+                    <label key={category} className="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg border border-gray-700 cursor-pointer hover:bg-gray-800">
+                      <span className="text-white font-medium">{category}</span>
+                      <div className="relative">
+                        <input
+                          type="checkbox"
+                          checked={tempSelectedCategory === category}
+                          onChange={() => handleTempCategoryChange(category)}
+                          className="sr-only"
+                        />
+                        <div className={`w-6 h-6 rounded border-2 flex items-center justify-center transition-colors ${
+                          tempSelectedCategory === category
+                            ? 'bg-purple-600 border-purple-600'
+                            : 'border-gray-500'
+                        }`}>
+                          {tempSelectedCategory === category && (
+                            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                          )}
+                        </div>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Provider Filters */}
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-3">Provider</h3>
+                <div className="space-y-2">
+                  {providerOptions.map((provider) => (
+                    <label key={provider} className="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg border border-gray-700 cursor-pointer hover:bg-gray-800">
+                      <span className="text-white font-medium">{provider}</span>
+                      <div className="relative">
+                        <input
+                          type="checkbox"
+                          checked={tempSelectedProviders.includes(provider)}
+                          onChange={() => handleTempProviderChange(provider)}
+                          className="sr-only"
+                        />
+                        <div className={`w-6 h-6 rounded border-2 flex items-center justify-center transition-colors ${
+                          tempSelectedProviders.includes(provider)
+                            ? 'bg-purple-600 border-purple-600'
+                            : 'border-gray-500'
+                        }`}>
+                          {tempSelectedProviders.includes(provider) && (
+                            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                          )}
+                        </div>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="p-6 border-t border-gray-700 space-y-3">
+              <button
+                onClick={applyFilters}
+                className="w-full py-3 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg transition-colors"
+              >
+                Apply Filters
+              </button>
+              <p className="text-center text-gray-400 text-sm">Click outside to apply filters</p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
-export default MyMCPs; 
+export default MyMCPs;
