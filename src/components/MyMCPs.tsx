@@ -8,6 +8,7 @@ const MyMCPs: React.FC = () => {
   const [selectedType, setSelectedType] = useState<string>('');
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [selectedProviders, setSelectedProviders] = useState<string[]>([]);
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
   
