@@ -10,12 +10,17 @@ const MyMCPs: React.FC = () => {
   const [selectedProviders, setSelectedProviders] = useState<string[]>([]);
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
-  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const [activeFilterPanel, setActiveFilterPanel] = useState<string | null>(null);
   
   // Temporary filter states for modal
   const [tempSelectedStatuses, setTempSelectedStatuses] = useState<string[]>([]);
   const [tempSelectedCategory, setTempSelectedCategory] = useState<string>('');
   const [tempSelectedProviders, setTempSelectedProviders] = useState<string[]>([]);
+  
+  // Refs for click outside detection
+  const statusPanelRef = useRef<HTMLDivElement>(null);
+  const categoryPanelRef = useRef<HTMLDivElement>(null);
+  const providerPanelRef = useRef<HTMLDivElement>(null);
   
   // Filter options
   const statusOptions = [
@@ -156,25 +161,25 @@ const MyMCPs: React.FC = () => {
     return matchesSearch && matchesStatus && matchesCategory && matchesProvider && matchesStartDate && matchesEndDate;
   });
 
-  // Open filter modal and set temporary states
-  const openFilterModal = () => {
+  // Open specific filter panel and set temporary states
+  const openFilterPanel = (panelType: string) => {
     setTempSelectedStatuses([...selectedStatuses]);
     setTempSelectedCategory(selectedCategory);
     setTempSelectedProviders([...selectedProviders]);
-    setIsFilterModalOpen(true);
+    setActiveFilterPanel(panelType);
   };
 
-  // Apply filters from modal
+  // Apply filters from panel
   const applyFilters = () => {
     setSelectedStatuses([...tempSelectedStatuses]);
     setSelectedCategory(tempSelectedCategory);
     setSelectedProviders([...tempSelectedProviders]);
-    setIsFilterModalOpen(false);
+    setActiveFilterPanel(null);
   };
 
-  // Cancel filter changes
-  const cancelFilters = () => {
-    setIsFilterModalOpen(false);
+  // Close filter panel
+  const closeFilterPanel = () => {
+    setActiveFilterPanel(null);
   };
 
   // Clear all filters
@@ -189,6 +194,28 @@ const MyMCPs: React.FC = () => {
     setTempSelectedCategory('');
     setTempSelectedProviders([]);
   };
+
+  // Handle click outside to apply filters
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Node;
+      
+      if (activeFilterPanel === 'status' && statusPanelRef.current && !statusPanelRef.current.contains(target)) {
+        applyFilters();
+      } else if (activeFilterPanel === 'category' && categoryPanelRef.current && !categoryPanelRef.current.contains(target)) {
+        applyFilters();
+      } else if (activeFilterPanel === 'provider' && providerPanelRef.current && !providerPanelRef.current.contains(target)) {
+        applyFilters();
+      }
+    };
+
+    if (activeFilterPanel) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
+  }, [activeFilterPanel]);
 
   // Handle temporary status filter changes
   const handleTempStatusChange = (status: string) => {
@@ -250,19 +277,50 @@ const MyMCPs: React.FC = () => {
               </div>
             </div>
             
-            {/* Filter Button */}
-            <button
-              onClick={openFilterModal}
-              className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-colors"
-            >
-              <Filter className="w-4 h-4" />
-              Filters
-              {hasActiveFilters && (
-                <span className="bg-purple-800 text-xs px-2 py-1 rounded-full">
-                  {(selectedStatuses.length + (selectedCategory ? 1 : 0) + selectedProviders.length)}
-                </span>
-              )}
-            </button>
+            {/* Filter Buttons */}
+            <div className="flex items-center gap-2">
+              <div className="relative">
+                <button
+                  onClick={() => openFilterPanel('status')}
+                  className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-colors"
+                >
+                  Status
+                  {selectedStatuses.length > 0 && (
+                    <span className="bg-purple-800 text-xs px-2 py-1 rounded-full">
+                      {selectedStatuses.length}
+                    </span>
+                  )}
+                </button>
+              </div>
+              
+              <div className="relative">
+                <button
+                  onClick={() => openFilterPanel('category')}
+                  className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-colors"
+                >
+                  Category
+                  {selectedCategory && (
+                    <span className="bg-purple-800 text-xs px-2 py-1 rounded-full">
+                      1
+                    </span>
+                  )}
+                </button>
+              </div>
+              
+              <div className="relative">
+                <button
+                  onClick={() => openFilterPanel('provider')}
+                  className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-colors"
+                >
+                  Provider
+                  {selectedProviders.length > 0 && (
+                    <span className="bg-purple-800 text-xs px-2 py-1 rounded-full">
+                      {selectedProviders.length}
+                    </span>
+                  )}
+                </button>
+              </div>
+            </div>
             
             {/* Results Count */}
             <div className="text-sm text-gray-400">
@@ -286,13 +344,13 @@ const MyMCPs: React.FC = () => {
         </div>
       </div>
 
-      {/* Filter Modal */}
-      {isFilterModalOpen && (
+      {/* Status Filter Panel */}
+      {activeFilterPanel === 'status' && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-gray-900 rounded-2xl w-full max-w-md border border-gray-700 overflow-hidden">
+          <div ref={statusPanelRef} className="bg-gray-900 rounded-2xl w-full max-w-md border border-gray-700 overflow-hidden">
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-gray-700">
-              <h2 className="text-xl font-bold text-white">Filter Options</h2>
+              <h2 className="text-xl font-bold text-white">Status Filter</h2>
               <button
                 onClick={clearFilters}
                 className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
@@ -304,11 +362,8 @@ const MyMCPs: React.FC = () => {
               </button>
             </div>
 
-            {/* Filter Content */}
+            {/* Status Filter Content */}
             <div className="p-6 space-y-4 max-h-96 overflow-y-auto">
-              {/* Status Filters */}
-              <div>
-                <h3 className="text-lg font-semibold text-white mb-3">Status</h3>
                 <div className="space-y-2">
                   {statusOptions.map((status) => (
                     <label key={status} className="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg border border-gray-700 cursor-pointer hover:bg-gray-800">
@@ -335,11 +390,43 @@ const MyMCPs: React.FC = () => {
                     </label>
                   ))}
                 </div>
-              </div>
 
-              {/* Category Filters */}
-              <div>
-                <h3 className="text-lg font-semibold text-white mb-3">Category</h3>
+            </div>
+
+            {/* Footer */}
+            <div className="p-6 border-t border-gray-700 space-y-3">
+              <button
+                onClick={applyFilters}
+                className="w-full py-3 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg transition-colors"
+              >
+                Apply Filters
+              </button>
+              <p className="text-center text-gray-400 text-sm">Click outside to apply filters</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Category Filter Panel */}
+      {activeFilterPanel === 'category' && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div ref={categoryPanelRef} className="bg-gray-900 rounded-2xl w-full max-w-md border border-gray-700 overflow-hidden">
+            {/* Header */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-700">
+              <h2 className="text-xl font-bold text-white">Category Filter</h2>
+              <button
+                onClick={clearFilters}
+                className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Reset
+              </button>
+            </div>
+
+            {/* Category Filter Content */}
+            <div className="p-6 space-y-4 max-h-96 overflow-y-auto">
                 <div className="space-y-2">
                   {categoryOptions.map((category) => (
                     <label key={category} className="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg border border-gray-700 cursor-pointer hover:bg-gray-800">
@@ -366,11 +453,43 @@ const MyMCPs: React.FC = () => {
                     </label>
                   ))}
                 </div>
-              </div>
 
-              {/* Provider Filters */}
-              <div>
-                <h3 className="text-lg font-semibold text-white mb-3">Provider</h3>
+            </div>
+
+            {/* Footer */}
+            <div className="p-6 border-t border-gray-700 space-y-3">
+              <button
+                onClick={applyFilters}
+                className="w-full py-3 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg transition-colors"
+              >
+                Apply Filters
+              </button>
+              <p className="text-center text-gray-400 text-sm">Click outside to apply filters</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Provider Filter Panel */}
+      {activeFilterPanel === 'provider' && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div ref={providerPanelRef} className="bg-gray-900 rounded-2xl w-full max-w-md border border-gray-700 overflow-hidden">
+            {/* Header */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-700">
+              <h2 className="text-xl font-bold text-white">Provider Filter</h2>
+              <button
+                onClick={clearFilters}
+                className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Reset
+              </button>
+            </div>
+
+            {/* Provider Filter Content */}
+            <div className="p-6 space-y-4 max-h-96 overflow-y-auto">
                 <div className="space-y-2">
                   {providerOptions.map((provider) => (
                     <label key={provider} className="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg border border-gray-700 cursor-pointer hover:bg-gray-800">
@@ -397,7 +516,6 @@ const MyMCPs: React.FC = () => {
                     </label>
                   ))}
                 </div>
-              </div>
             </div>
 
             {/* Footer */}

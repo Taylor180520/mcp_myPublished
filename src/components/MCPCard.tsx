@@ -210,6 +210,98 @@ const MCPCard: React.FC<MCPCardProps> = ({ mcp }) => {
   };
 
   const renderActions = () => {
+    // Define available actions based on status
+    const getAvailableActions = (status: MCPStatus) => {
+      let canEdit = false;
+      let canWithdraw = false;
+      let canSubmit = false;
+      let canUnpublish = false;
+      let canDelete = false;
+
+      switch (status) {
+        case 'Pending':
+          canWithdraw = true;
+          break;
+        case 'Auto Approved':
+          canWithdraw = true;
+          break;
+        case 'Auto Rejected':
+          canEdit = true;
+          canDelete = true;
+          break;
+        case 'Rejected':
+          canEdit = true;
+          canDelete = true;
+          break;
+        case 'Published':
+          canUnpublish = true;
+          canDelete = true;
+          break;
+        case 'Delisted':
+          canEdit = true;
+          canDelete = true;
+          break;
+        case 'Not Submitted':
+          canEdit = true;
+          canSubmit = true;
+          canDelete = true;
+          break;
+        default:
+          break;
+      }
+
+      return { canEdit, canWithdraw, canSubmit, canUnpublish, canDelete };
+    };
+
+    const actions = getAvailableActions(mcp.status);
+
+    return (
+      <div className="flex items-center justify-between w-full">
+        <ActionButton 
+          icon={<Edit className="w-4 h-4" />} 
+          label="Edit" 
+          onClick={handleEdit}
+          disabled={!actions.canEdit}
+        />
+        
+        {actions.canWithdraw && (
+          <ActionButton 
+            icon={<XCircle className="w-4 h-4" />} 
+            label="Withdraw" 
+            variant="warning" 
+            onClick={handleWithdrawClick}
+          />
+        )}
+        
+        {actions.canSubmit && (
+          <ActionButton 
+            icon={<Send className="w-4 h-4" />} 
+            label="Submit" 
+            onClick={handleSubmitClick}
+          />
+        )}
+        
+        {actions.canUnpublish && (
+          <ActionButton 
+            icon={<XCircle className="w-4 h-4" />} 
+            label="Unpublish" 
+            variant="warning" 
+            onClick={handleUnpublishClick}
+          />
+        )}
+        
+        <ActionButton 
+          icon={<Trash2 className="w-4 h-4" />} 
+          label="Delete" 
+          variant="danger" 
+          onClick={handleDeleteClick}
+          disabled={!actions.canDelete}
+        />
+      </div>
+    );
+  };
+
+  const renderActionsOld = () => {
     switch (mcp.status) {
       case 'Not Submitted':
         return (
