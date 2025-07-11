@@ -274,7 +274,7 @@ const MCPCard: React.FC<MCPCardProps> = ({ mcp }) => {
             <ActionButton icon={<Edit className="w-4 h-4" />} label="Edit" onClick={handleEdit} />
             <ActionButton 
               icon={<Send className="w-4 h-4" />} 
-              label="Resubmit" 
+              label="Submit" 
               onClick={handleSubmitClick}
             />
             <ActionButton 
@@ -291,7 +291,7 @@ const MCPCard: React.FC<MCPCardProps> = ({ mcp }) => {
             <ActionButton icon={<Edit className="w-4 h-4" />} label="Edit" onClick={handleEdit} />
             <ActionButton 
               icon={<Send className="w-4 h-4" />} 
-              label="Resubmit" 
+              label="Submit" 
               onClick={handleSubmitClick}
             />
             <ActionButton 
@@ -453,4 +453,4 @@ const ActionButton: React.FC<ActionButtonProps> = ({
   );
 };
 
-export default MCPCard; 
+export default MCPCard;
