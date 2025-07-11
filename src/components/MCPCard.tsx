@@ -310,40 +310,37 @@ const MCPCard: React.FC<MCPCardProps> = ({ mcp }) => {
   return (
     <div className="bg-primary-color rounded-xl overflow-hidden shadow-md border border-gray-800 hover:border-gray-600 transition-colors cursor-pointer">
       <div className="p-6" onClick={handleCardClick}>
-        {/* Header Section */}
-        <div className="flex justify-between items-start mb-4">
+        {/* Header Section with Status in Top Right */}
+        <div className="relative mb-4">
+          {/* Status Badge - Top Right */}
+          <div className="absolute top-0 right-0">
+            {renderStatusWithTooltip()}
+          </div>
+          
           <div className="flex items-start space-x-4 flex-1">
             <img 
               src={mcp.image} 
               alt={mcp.name} 
-              className="w-14 h-14 rounded-lg object-cover flex-shrink-0"
+              className="w-14 h-14 rounded-lg object-cover flex-shrink-0 mr-16"
             />
-            <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0 pr-16">
               <h3 className="text-lg font-semibold text-white mb-2 truncate">{mcp.name}</h3>
               <p className="text-sm text-gray-400 leading-snug mb-3 line-clamp-2">{mcp.description}</p>
               
               {/* Tags Section */}
               <div className="flex flex-wrap gap-2 mb-3">
-                {renderProviderIndicator()}
                 {renderCategoryTag()}
                 {renderTypeIndicator()}
               </div>
-              
-              {/* Status with Tooltip */}
-              {renderStatusWithTooltip()}
             </div>
           </div>
         </div>
 
-        {/* Date Information */}
+        {/* Date Information - Only Submitted Date */}
         <div className="text-xs text-gray-400 mb-4 space-y-1">
           <div className="flex justify-between">
             <span>Submitted:</span>
             <span className="font-medium">{formatDateTime(mcp.submittedDate)}</span>
-          </div>
-          <div className="flex justify-between">
-            <span>Created:</span>
-            <span className="font-medium">{formatDateTime(mcp.createdAt)}</span>
           </div>
         </div>
 
