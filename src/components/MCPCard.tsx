@@ -429,9 +429,8 @@ const MCPCard: React.FC<MCPCardProps> = ({ mcp }) => {
 
         {/* Date Information - Only Submitted Date */}
         <div className="text-xs text-gray-400 mb-4 space-y-1">
-          <div className="flex justify-between">
-            <span>Submitted:</span>
-            <span className="font-medium">{formatDateTime(mcp.submittedDate)}</span>
+          <div className="flex justify-end">
+            <span className="font-medium">Submitted: {formatDateTime(mcp.submittedDate)}</span>
           </div>
         </div>
 
